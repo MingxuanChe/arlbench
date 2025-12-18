@@ -1,12 +1,15 @@
 """Automated Reinforcement Learning Environment."""
 from __future__ import annotations
 
+import time
 import warnings
 from collections.abc import Callable
 from typing import Any
 
 import gymnasium
 import jax
+import jax.numpy as jnp
+import jax.tree_util
 import numpy as np
 import pandas as pd
 from ConfigSpace import Configuration, ConfigurationSpace
@@ -328,6 +331,137 @@ class AutoRLEnv(gymnasium.Env):
         else:
             raise ValueError(f"Unsupported algorithm: {self._algorithm.name}")
 
+    def _step_multi_seed(
+        self,
+        action: Configuration | dict,
+        checkpoint_path: str | None,
+        n_total_timesteps: int | None,
+        n_eval_steps: int | None,
+        n_eval_episodes: int | None,
+        seeds: list[int],
+    ) -> tuple[ObservationT, ObjectivesT, bool, bool, InfoT]:
+        """Performs one iteration of RL training for multiple seeds simultaneously."""
+        self._algorithm = self._make_algorithm()
+
+        # Initialize or load states for all seeds
+        if self._algorithm_state is None:
+            if checkpoint_path is None:
+                rngs = jnp.stack([jax.random.key(s) for s in seeds])
+                self._algorithm_state = jax.vmap(self._algorithm.init)(rngs)
+            else:
+                # Initialize for all seeds
+                states = []
+                for s in seeds:
+                    if checkpoint_path:
+                        try:
+                            state = self._load(checkpoint_path, s)
+                        except Exception as e:  # noqa: BLE001
+                            print(e)
+                            init_rng = jax.random.key(s)
+                            state = self._algorithm.init(init_rng)
+                    else:
+                        init_rng = jax.random.key(s)
+                        state = self._algorithm.init(init_rng)
+                    states.append(state)
+
+                # Stack states
+                self._algorithm_state = jax.tree_util.tree_map(
+                    lambda *args: jnp.stack(args), *states
+                )
+        else:
+            # Re-initialize for each seed, preserving weights from current state
+            # This handles the transition from Single -> Multi seed
+            dummy_rng = jax.random.key(0)
+            # Get current weights/state
+            base_kwargs = self.get_algorithm_init_kwargs(dummy_rng)
+            if "rng" in base_kwargs:
+                del base_kwargs["rng"]
+
+            # Create batch of RNGs
+            rngs = jnp.stack([jax.random.key(s) for s in seeds])
+
+            def init_fn(rng):
+                return self._algorithm.init(rng, **base_kwargs)
+
+            self._algorithm_state = jax.vmap(init_fn)(rngs)
+
+        # Training kwargs
+        n_total_timesteps = (
+            n_total_timesteps
+            if n_total_timesteps
+            else self._config["n_total_timesteps"]
+        )
+        n_eval_steps = (
+            n_eval_steps if n_eval_steps else self._config["n_eval_steps"]
+        )
+        n_eval_episodes = (
+            n_eval_episodes if n_eval_episodes else self._config["n_eval_episodes"]
+        )
+
+        vmap_train = jax.vmap(self._algorithm.train, in_axes=(0, 0, None, None, None))
+
+        start_time = time.time()
+
+        batched_state, batched_result = vmap_train(
+            *self._algorithm_state, n_total_timesteps, n_eval_steps, n_eval_episodes
+        )
+
+        runtime = time.time() - start_time
+
+        self._algorithm_state = batched_state
+        self._train_result = batched_result  # This is now batched
+
+        # Compute objectives
+        objectives = {}
+
+        # Runtime
+        if "runtime" in self._config["objectives"]:
+            # Runtime is shared/total for the batch
+            objectives["runtime"] = runtime
+            if self._config["optimize_objectives"] != "lower":  # Runtime is naturally lower
+                objectives["runtime"] *= -1
+
+        # Rewards
+        eval_rewards = batched_result.eval_rewards
+        last_eval_rewards = eval_rewards[:, -1, :]  # (n_seeds, n_eval_episodes)
+
+        for o_name in self._config["objectives"]:
+            if o_name.startswith("reward"):
+                # e.g. reward_mean
+                parts = o_name.split("_")
+                agg = parts[1] if len(parts) > 1 else "mean"
+
+                # Aggregate over episodes
+                episode_agg = getattr(np, agg)(last_eval_rewards, axis=1)  # (n_seeds,)
+
+                # Aggregate over seeds (always mean?)
+                seed_agg = np.mean(episode_agg)
+
+                val = seed_agg.item()
+                if (
+                    self._config["optimize_objectives"] == "lower"
+                ):  # Reward is naturally upper
+                    val *= -1
+                objectives[o_name] = val
+
+        # Observations
+        obs = {}
+        obs["steps"] = np.array([self._c_step, self._total_training_steps])
+
+        self._total_training_steps += n_total_timesteps
+
+        info = {}
+        steps = (
+            np.arange(1, n_eval_steps + 1)
+            * n_total_timesteps
+            // n_eval_steps
+        )
+        # returns: mean over seeds and episodes
+        returns = eval_rewards.mean(axis=(0, 2))
+        info["train_info_df"] = pd.DataFrame({"steps": steps, "returns": returns})
+
+        return obs, objectives, False, self._done, info
+
     def step(
         self,
         action: Configuration | dict,
@@ -335,7 +469,7 @@ class AutoRLEnv(gymnasium.Env):
         n_total_timesteps: int | None = None,
         n_eval_steps: int | None = None,
         n_eval_episodes: int | None = None,
-        seed: int | None = None,
+        seed: int | list[int] | None = None,
     ) -> tuple[ObservationT, ObjectivesT, bool, bool, InfoT]:
         """Performs one iteration of RL training.
 
@@ -344,7 +478,7 @@ class AutoRLEnv(gymnasium.Env):
             n_total_timesteps (int | None, optional): Number of total training steps. Defaults to None.
             n_eval_steps (int | None, optional): Number of evaluations during training. Defaults to None.
             n_eval_episodes (int | None, optional): Number of episodes to run per evalution during training. Defaults to None.
-            seed (int | None, optional): Random seed. Defaults to None. If None, seed of the AutoRL environment is used.
+            seed (int | list[int] | None, optional): Random seed(s). Defaults to None. If None, seed of the AutoRL environment is used.
 
         Raises:
             ValueError: Error is raised if step() is called before reset() was called.
@@ -372,6 +506,16 @@ class AutoRLEnv(gymnasium.Env):
         self._hpo_config = action
 
         seed = seed if seed else self._seed
+
+        if isinstance(seed, list):
+            return self._step_multi_seed(
+                action,
+                checkpoint_path,
+                n_total_timesteps,
+                n_eval_steps,
+                n_eval_episodes,
+                seed,
+            )
 
         self._algorithm = self._make_algorithm()
 
