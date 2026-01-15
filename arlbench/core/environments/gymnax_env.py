@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 import gymnax
 import jax
+from dataclasses import replace
 
 from .autorl_env import Environment
 
@@ -17,7 +18,7 @@ class GymnaxEnv(Environment):
     """A gymnax-based RL environment."""
 
     def __init__(
-        self, env_name: str, n_envs: int, env_kwargs: dict[str, Any] | None = None
+        self, env_name: str, n_envs: int, env_kwargs: dict[str, Any] | None = None, env_params: dict[str, Any] | None = None
     ):
         """Creates a gymnax environment for JAX-based RL training.
 
@@ -29,7 +30,8 @@ class GymnaxEnv(Environment):
         """
         if env_kwargs is None:
             env_kwargs = {}
-        env, env_params = gymnax.make(env_name, **env_kwargs)
+        env, og_env_params = gymnax.make(env_name, **env_kwargs)
+        env_params = replace(og_env_params, **(env_params or {}))
         super().__init__(env_name, env, n_envs)
 
         self.env_params = env_params

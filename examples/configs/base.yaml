@@ -20,6 +20,7 @@ autorl:
   env_framework: ${environment.framework}
   env_name: ${environment.name}
   env_kwargs: ${environment.kwargs}
+  env_params: ${environment.env_params}
   eval_env_kwargs: ${environment.eval_kwargs}
   n_envs: ${environment.n_envs}
   algorithm: ${algorithm}

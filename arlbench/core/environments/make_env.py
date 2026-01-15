@@ -19,6 +19,7 @@ def make_env(
     n_envs: int = 1,
     seed: int = 0,
     env_kwargs: dict[str, Any] | None = None,
+    env_params: dict[str, Any] | None = None,
 ) -> Environment | Wrapper:
     """ARLBench equivalent to make_env in gymnasium/gymnax etc.
     Creates a JAX-compatible RL environment.
@@ -50,7 +51,7 @@ def make_env(
     elif env_framework == "gymnax":
         from .gymnax_env import GymnaxEnv
 
-        env = GymnaxEnv(env_name, n_envs, env_kwargs=env_kwargs)
+        env = GymnaxEnv(env_name, n_envs, env_kwargs=env_kwargs, env_params=env_params)
     elif env_framework == "envpool":
         from .envpool_env import EnvpoolEnv
 
