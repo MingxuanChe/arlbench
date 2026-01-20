@@ -11,6 +11,7 @@ import jax
 import jax.numpy as jnp
 import jax.tree_util
 import numpy as np
+import omegaconf
 import pandas as pd
 from ConfigSpace import Configuration, ConfigurationSpace
 
@@ -97,7 +98,13 @@ class AutoRLEnv(gymnasium.Env):
                         f"Invalid config key '{k}'. This item will be ignored."
                     )
 
-        self._seed = int(self._config["seed"])
+        if isinstance(self._config["seed"], omegaconf.listconfig.ListConfig):
+            init_seed = int(self._config["seed"][0])
+            self._seed = [int(s) for s in self._config["seed"]]
+        else:
+            init_seed = int(self._config["seed"])
+            self._seed = init_seed
+
 
         self._done = True
         self._total_training_steps = 0  # timesteps across calls of step()
@@ -111,7 +118,7 @@ class AutoRLEnv(gymnasium.Env):
             n_envs=self._config["n_envs"],
             env_kwargs=self._config["env_kwargs"],
             cnn_policy=self._config["cnn_policy"],
-            seed=self._seed,
+            seed=init_seed,
             env_params=self._config.get("env_params", None)
         )
 
@@ -121,7 +128,7 @@ class AutoRLEnv(gymnasium.Env):
             n_envs=self._config["n_envs"],
             env_kwargs=self._config["eval_env_kwargs"],
             cnn_policy=self._config["cnn_policy"],
-            seed=self._seed + 1,
+            seed=init_seed + 1,
             env_params=self._config.get("env_eval_params", None)
         )
 
@@ -337,7 +344,6 @@ class AutoRLEnv(gymnasium.Env):
 
     def _step_multi_seed(
         self,
-        action: Configuration | dict,
         checkpoint_path: str | None,
         n_total_timesteps: int | None,
         n_eval_steps: int | None,
@@ -409,23 +415,25 @@ class AutoRLEnv(gymnasium.Env):
         batched_state, batched_result = vmap_train(
             *self._algorithm_state, n_total_timesteps, n_eval_steps, n_eval_episodes
         )
+        # batched results have shape (n_seeds, n_eval_steps, n_eval_episodes)
 
         runtime = time.time() - start_time
 
         self._algorithm_state = batched_state
         self._train_result = batched_result  # This is now batched
 
-        # Compute objectives
+        # Compute objectives for each seed
         objectives = {}
 
-        # Runtime
+        # Runtime - shared across all seeds
         if "runtime" in self._config["objectives"]:
             # Runtime is shared/total for the batch
-            objectives["runtime"] = runtime
+            runtime_val = runtime
             if self._config["optimize_objectives"] != "lower":  # Runtime is naturally lower
-                objectives["runtime"] *= -1
+                runtime_val *= -1
+            objectives["runtime"] = np.array([runtime_val] * len(seeds))
 
-        # Rewards
+        # Rewards - per seed
         eval_rewards = batched_result.eval_rewards
         last_eval_rewards = eval_rewards[:, -1, :]  # (n_seeds, n_eval_episodes)
 
@@ -435,18 +443,13 @@ class AutoRLEnv(gymnasium.Env):
                 parts = o_name.split("_")
                 agg = parts[1] if len(parts) > 1 else "mean"
 
-                # Aggregate over episodes
+                # Aggregate over episodes for each seed
                 episode_agg = getattr(np, agg)(last_eval_rewards, axis=1)  # (n_seeds,)
 
-                # Aggregate over seeds (always mean?)
-                seed_agg = np.mean(episode_agg)
-
-                val = seed_agg.item()
-                if (
-                    self._config["optimize_objectives"] == "lower"
-                ):  # Reward is naturally upper
-                    val *= -1
-                objectives[o_name] = val
+                if self._config["optimize_objectives"] == "lower":  # Reward is naturally upper
+                    episode_agg = -episode_agg
+                
+                objectives[o_name] = episode_agg
 
         # Observations
         obs = {}
@@ -460,8 +463,12 @@ class AutoRLEnv(gymnasium.Env):
             * n_total_timesteps
             // n_eval_steps
         )
-        # returns: mean over seeds and episodes
-        returns = eval_rewards.mean(axis=(0, 2))
+        # returns: shape (n_seeds, n_eval_steps, n_eval_episodes)
+        # Store per-seed returns in info
+        info["eval_rewards"] = eval_rewards
+        info["seeds"] = seeds
+        # Also provide aggregated view for convenience
+        returns = eval_rewards.mean(axis=(0, 2))  # mean over seeds and episodes
         info["train_info_df"] = pd.DataFrame({"steps": steps, "returns": returns})
 
         return obs, objectives, False, self._done, info
