@@ -520,7 +520,6 @@ class AutoRLEnv(gymnasium.Env):
 
         if isinstance(seed, list):
             return self._step_multi_seed(
-                action,
                 checkpoint_path,
                 n_total_timesteps,
                 n_eval_steps,

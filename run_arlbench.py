@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 
 import hydra
 import jax
+import numpy as np
 from arlbench.arlbench import run_arlbench
 
 if TYPE_CHECKING:
@@ -42,11 +43,16 @@ def run(cfg: DictConfig, logger: logging.Logger):
     objectives = run_arlbench(cfg, logger=logger)
     logger.info(f"Returned objectives: {objectives}")
 
-    with open("./performance.csv", "w+") as f:
-        f.write(str(objectives))
+    with open("./performance.txt", "w+") as f:
+        if isinstance(np.asarray(objectives), np.ndarray):
+        # Use numpy.array2string to prevent newlines in array representation
+            f.write(np.array2string(objectives, separator=',', max_line_width=np.inf).replace(' ', ''))
+        else:
+            f.write(str(objectives))
+            
     with open("./done.txt", "w+") as f:
         f.write("yes")
-
+        
     return objectives
 
 

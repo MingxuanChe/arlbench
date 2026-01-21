@@ -1,0 +1,50 @@
+defaults:
+  - _self_
+  - /algorithm: dqn
+  - /environment: cc_cartpole
+  - search_space: dqn
+  - override hydra/sweeper: HyperRS
+
+hydra:
+  sweeper:
+    n_trials: 256 # number of hyperparameter configurations
+    search_space: ${search_space}
+    sweeper_kwargs:
+      maximize: true
+      max_parallelization: 1 #  run all of it at once
+      # seeds: [42, 43, 44] # 
+  run:
+    dir: results/sobol/${algorithm}_${autorl.env_name}/${autorl.seed}
+  sweep:
+    dir: results/sobol/${algorithm}_${autorl.env_name}/${autorl.seed}
+  job:
+    chdir: true
+
+load_checkpoint: ""
+jax_enable_x64: ${environment.jax_enable_x64}
+search_space.seed: 0
+seed: 42 # Base seed
+
+autorl:
+  # seed: ${seed} # by default use the base seed
+  seed: [42, 43, 44, 45, 46, 47, 48, 49, 50, 51,]  # Vectorized multi-seed execution
+  # seed: [1, 2]
+  env_framework: ${environment.framework}
+  env_name: ${environment.name}
+  env_kwargs: ${environment.kwargs}
+  eval_env_kwargs: ${environment.eval_kwargs}
+  n_envs: ${environment.n_envs}
+  algorithm: ${algorithm}
+  cnn_policy: ${environment.cnn_policy}
+  deterministic_eval: ${environment.deterministic_eval}
+  nas_config: ${nas_config}
+  n_total_timesteps: ${environment.n_total_timesteps}
+  checkpoint: []
+  checkpoint_name: "default_checkpoint"
+  checkpoint_dir: "/tmp"
+  state_features: []
+  objectives: ["reward_mean"]
+  optimize_objectives: "upper"
+  n_eval_steps: 10
+  n_steps: 10
+  n_eval_episodes: 128
