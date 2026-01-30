@@ -44,7 +44,7 @@ def run(cfg: DictConfig, logger: logging.Logger):
     logger.info(f"Returned objectives: {objectives}")
 
     with open("./performance.txt", "w+") as f:
-        if isinstance(np.asarray(objectives), np.ndarray):
+        if isinstance(np.asarray(objectives), np.ndarray) and np.asarray(objectives).ndim > 0:
         # Use numpy.array2string to prevent newlines in array representation
             f.write(np.array2string(objectives, separator=',', max_line_width=np.inf).replace(' ', ''))
         else:

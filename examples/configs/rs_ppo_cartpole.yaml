@@ -1,18 +1,18 @@
 defaults:
   - _self_
-  - /algorithm: dqn
+  - /algorithm: ppo
   - /environment: cc_cartpole
-  - search_space: dqn
+  - search_space: ppo_cc
   - override hydra/sweeper: HyperRS
 
 hydra:
   sweeper:
-    n_trials: 256 # number of hyperparameter configurations
+    n_trials: 2 # number of hyperparameter configurations
     search_space: ${search_space}
     sweeper_kwargs:
       maximize: true
       max_parallelization: 1 #  run all of it at once
-      # seeds: [1, 2, 3] 
+      # seeds: [42, 43, 44] # 
   run:
     dir: results/sobol/${algorithm}_${autorl.env_name}/${autorl.seed}
   sweep:
@@ -27,11 +27,7 @@ seed: 42 # Base seed
 
 autorl:
   # seed: ${seed} # by default use the base seed
-  seed: [42, 43, 44, 45, 46, 47, 48, 49, 50, 51,
-         52, 53, 54, 55, 56, 57, 58, 59, 60, 61,
-        #  62, 63, 64, 65, 66, 67, 68, 69, 70, 71,
-  ]  # Vectorized multi-seed execution
-  # seed: [1, 2, 3]
+  seed: [42, 43, 44, 45, 46, 47, 48, 49, 50, 51,]  # Vectorized multi-seed execution
   env_framework: ${environment.framework}
   env_name: ${environment.name}
   env_kwargs: ${environment.kwargs}
@@ -49,5 +45,4 @@ autorl:
   objectives: ["reward_mean"]
   optimize_objectives: "upper"
   n_eval_steps: 10
-  n_steps: 10
   n_eval_episodes: 128

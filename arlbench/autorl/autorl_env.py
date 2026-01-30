@@ -469,8 +469,17 @@ class AutoRLEnv(gymnasium.Env):
         info["seeds"] = seeds
         # Also provide aggregated view for convenience
         returns = eval_rewards.mean(axis=(0, 2))  # mean over seeds and episodes
-        info["train_info_df"] = pd.DataFrame({"steps": steps, "returns": returns})
-
+        # save the return of each seed separately
+        returns = eval_rewards.mean(axis=2)  # mean over episodes for each seed
+        # info["train_info_df"] = pd.DataFrame({"steps": steps, "returns": returns})
+        # save the return of each seed separately with header return_seed_{seed}
+        info["train_info_df"] = pd.DataFrame(
+            {
+                "steps": steps,
+                **{f"return_seed_{seeds[i]}": returns[i] for i in range(len(seeds))}
+            }
+        )
+        
         return obs, objectives, False, self._done, info
 
     def step(
