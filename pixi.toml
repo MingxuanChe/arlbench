@@ -20,8 +20,10 @@ test = "pytest tests/"
 [dependencies]
 python = "3.10.*"
 pip = "*"
-cuda-version = "12.*"
+cuda-version = "12.6.*"
 cudnn = ">=8.9"
+cuda-nvcc = "12.6.*"
+cuda-cudart = "12.6.*"
 
 [activation.env]
 CUDA_VISIBLE_DEVICES = "0"
@@ -45,7 +47,7 @@ chex = ">=0.1.86"
 ConfigSpace = "==1.2.1"
 distrax = "==0.1.5"
 flax = "==0.10.0"
-brax = "==0.10.3"
+brax = "~=0.10.3"
 warp-lang = "*"
 pytest = "==7.4.4"
 coverage = "==7.4.4"
@@ -67,7 +69,7 @@ pytest-coverage = "*"
 pytest-cases = "==3.8.5"
 
 [feature.examples.pypi-dependencies]
-hypersweeper = "==0.2.0"
+# hypersweeper = "==0.2.0"
 
 [feature.doc.pypi-dependencies]
 automl_sphinx_theme = "==0.2.0"
