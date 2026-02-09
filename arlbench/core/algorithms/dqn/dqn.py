@@ -407,7 +407,7 @@ class DQN(Algorithm):
         Returns:
             jnp.ndarray: Action(s).
         """
-
+        # print(f"self.eval_eps: {self.eval_eps} in predict")
         def random_action(rng: chex.PRNGKey, _) -> jnp.ndarray:
             _rngs = jax.random.split(rng, obs.shape[0])
             return jnp.array(
@@ -486,7 +486,18 @@ class DQN(Algorithm):
                 jnp.array([n_total_timesteps] * n_update_steps),
                 n_update_steps,
             )
+            
+            # Set deterministic evaluation to True
+            original_deterministic_eval = self.deterministic_eval
+            original_eval_eps = self.eval_eps
+            self.deterministic_eval = True
+            self.eval_eps = 0.0
+            # print(f"self.eval_eps: {self.eval_eps} in train_eval_step before eval")
             eval_returns = self.eval(runner_state, n_eval_episodes)
+            # Restore original deterministic_eval setting
+            self.deterministic_eval = original_deterministic_eval
+            self.eval_eps = original_eval_eps
+            # print(f"self.eval_eps: {self.eval_eps} in train_eval_step after eval")
 
             return (runner_state, buffer_state), DQNTrainingResult(
                 eval_rewards=eval_returns, trajectories=trajectories, metrics=metrics
