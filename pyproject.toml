@@ -49,7 +49,9 @@ license = { file = "LICENSE" }
 dev = ["ARLBench[doc, test, examples]", "ruff==0.4.0", "pre-commit==3.7.0", "bump-my-version==0.20.1", "twine==5.0.0",  "mypy==1.9.0"]
 
 test = ["pytest==7.4.4", "pytest-coverage", "pytest-cases==3.8.5", "ARLBench[examples]"]
-examples = ["hypersweeper==0.2.0"]
+examples = [
+  # "hypersweeper==0.2.0"
+  ]
 doc = [
   "automl_sphinx_theme==0.2.0",
   "sphinx-toolbox==3.5.0",
