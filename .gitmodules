@@ -1,0 +1,4 @@
+[submodule "hypersweeper"]
+	path = hypersweeper
+	url = git@github.com:MingxuanChe/hypersweeper.git
+	branch = arlbench
