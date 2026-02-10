@@ -18,7 +18,7 @@ dependencies = [
   "ConfigSpace==1.2.1",
   "distrax==0.1.5",
   "flax==0.10.0",
-  "brax==0.10.3",
+  "brax==0.10.5",
   "mujoco==3.1.6",
   "mujoco-mjx==3.1.6",
   "warp-lang",  # Required by brax for physics simulation
