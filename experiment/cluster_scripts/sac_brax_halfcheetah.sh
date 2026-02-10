@@ -3,15 +3,15 @@
 #SBATCH --cpus-per-task=32
 #SBATCH --gres=gpu:1
 #SBATCH --mem=64GB
-#SBATCH -J arlb_dqn_xland_er
-#SBATCH -t 1-06:00:00
+#SBATCH -J arlb_sac_halfcheetah
+#SBATCH -t 9-00:00:00
 #SBATCH --mail-type fail,end
 #SBATCH --mail-user m.che@ai.uni-hannover.de
 #SBATCH -p ai
-#SBATCH --output experiment/cluster_scripts/log/dqn_xland_empty_random_%A.out
-#SBATCH --error experiment/cluster_scripts/log/dqn_xland_empty_random_%A.err
+#SBATCH --output experiment/cluster_scripts/log/sac_brax_halfcheetah_%A.out
+#SBATCH --error experiment/cluster_scripts/log/sac_brax_halfcheetah_%A.err
 
-# DQN on XLand EmptyRandom environment
+# SAC on Brax HalfCheetah environment
 # Seeds: 42-71 (30 seeds)
 # 512 trials per seed
 
@@ -21,10 +21,10 @@ echo "Job ID: $SLURM_JOB_ID"
 echo "================================================="
 
 NUM_TRIALS=512
-CONFIG="rs_dqn_cartpole"
-ALGO="dqn"
-SEARCH_SPACE="dqn_cc"
-ENV="xland_empty_random"
+CONFIG="rs_ppo_cartpole"
+ALGO="sac"
+SEARCH_SPACE="sac_mujoco"
+ENV="brax_halfcheetah"
 
 cd $BIGWORK/Repo/arlbench
 
