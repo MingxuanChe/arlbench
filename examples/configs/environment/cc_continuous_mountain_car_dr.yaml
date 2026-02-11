@@ -1,0 +1,37 @@
+name: "MountainCarContinuous-v0"
+framework: "gymnax"
+n_total_timesteps: 1e5
+kwargs: {}
+eval_kwargs: {}
+cnn_policy: False
+deterministic_eval: True
+jax_enable_x64: False
+n_envs: 8
+
+env_params: {}
+
+# Domain randomization configuration for MountainCarContinuous-v0
+domain_randomization:
+  power:
+    distribution: "normal"
+    mean: 0.0015
+    std: 0.0003       # 20% std
+    clip_min: 0.00105  # 70% of default
+    clip_max: 0.00195  # 130% of default
+  gravity:
+    distribution: "uniform"
+    min_value: 0.002   # 80% of default (0.0025)
+    max_value: 0.003   # 120% of default
+
+# Evaluation domain randomization (same distribution as training)
+eval_domain_randomization:
+  power:
+    distribution: "normal"
+    mean: 0.0015
+    std: 0.0003
+    clip_min: 0.00105
+    clip_max: 0.00195
+  gravity:
+    distribution: "uniform"
+    min_value: 0.002
+    max_value: 0.003

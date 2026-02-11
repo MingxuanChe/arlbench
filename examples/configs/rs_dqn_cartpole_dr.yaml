@@ -1,0 +1,47 @@
+# Random search example with domain randomization for cc_cartpole
+defaults:
+  - _self_
+  - /algorithm: dqn
+  - /environment: cc_cartpole_dr
+  - search_space: dqn_cc
+  - override hydra/sweeper: HyperRS
+
+hydra:
+  sweeper:
+    n_trials: 20  # Number of hyperparameter configurations
+    search_space: ${search_space}
+    sweeper_kwargs:
+      maximize: true
+      max_parallelization: 1  # Run one trial at a time
+  run:
+    dir: results/rs_dr/${algorithm}_${autorl.env_name}/${autorl.seed}
+  sweep:
+    dir: results/rs_dr/${algorithm}_${autorl.env_name}/${autorl.seed}
+  job:
+    chdir: true
+
+load_checkpoint: ""
+jax_enable_x64: ${environment.jax_enable_x64}
+search_space.seed: 0
+seed: 42  # Base seed
+
+autorl:
+  seed: [42, 43, 44, 45, 46]  # Multi-seed evaluation with domain randomization
+  env_framework: ${environment.framework}
+  env_name: ${environment.name}
+  env_kwargs: ${environment.kwargs}
+  eval_env_kwargs: ${environment.eval_kwargs}
+  n_envs: ${environment.n_envs}
+  algorithm: ${algorithm}
+  cnn_policy: ${environment.cnn_policy}
+  deterministic_eval: ${environment.deterministic_eval}
+  nas_config: ${nas_config}
+  n_total_timesteps: ${environment.n_total_timesteps}
+  checkpoint: []
+  checkpoint_name: "default_checkpoint"
+  checkpoint_dir: "/tmp"
+  state_features: []
+  objectives: ["reward_mean"]
+  optimize_objectives: "upper"
+  n_eval_steps: 10
+  n_eval_episodes: 128

@@ -1,0 +1,81 @@
+name: "Acrobot-v1"
+framework: "gymnax"
+n_total_timesteps: 1e5
+kwargs: {}
+eval_kwargs: {}
+cnn_policy: False
+deterministic_eval: True
+jax_enable_x64: False
+n_envs: 8
+
+env_params: {}
+
+# Domain randomization configuration for Acrobot-v1
+domain_randomization:
+  # link_length_1:
+  #   distribution: "uniform"
+  #   min_value: 0.8   # 80% of default (1.0)
+  #   max_value: 1.2   # 120% of default
+  # link_length_2:
+  #   distribution: "uniform"
+  #   min_value: 0.8   # 80% of default (1.0)
+  #   max_value: 1.2   # 120% of default
+  link_mass_1:
+    distribution: "normal"
+    mean: 1.0
+    std: 0.2         # 20% std
+    clip_min: 0.7    # 70% of default
+    clip_max: 1.3    # 130% of default
+  link_mass_2:
+    distribution: "normal"
+    mean: 1.0
+    std: 0.2         # 20% std
+    clip_min: 0.7    # 70% of default
+    clip_max: 1.3    # 130% of default
+  # link_com_pos_1:
+  #   distribution: "normal"
+  #   mean: 0.5
+  #   std: 0.1         # 20% std
+  #   clip_min: 0.4    # 80% of default
+  #   clip_max: 0.6    # 120% of default
+  # link_com_pos_2:
+  #   distribution: "normal"
+  #   mean: 0.5
+  #   std: 0.1         # 20% std
+  #   clip_min: 0.4    # 80% of default
+  #   clip_max: 0.6    # 120% of default
+
+# Evaluation domain randomization (same distribution as training)
+eval_domain_randomization:
+  # link_length_1:
+  #   distribution: "uniform"
+  #   min_value: 0.8
+  #   max_value: 1.2
+  # link_length_2:
+  #   distribution: "uniform"
+  #   min_value: 0.8
+  #   max_value: 1.2
+  link_mass_1:
+    distribution: "normal"
+    mean: 1.0
+    std: 0.2
+    clip_min: 0.7
+    clip_max: 1.3
+  link_mass_2:
+    distribution: "normal"
+    mean: 1.0
+    std: 0.2
+    clip_min: 0.7
+    clip_max: 1.3
+  # link_com_pos_1:
+  #   distribution: "normal"
+  #   mean: 0.5
+  #   std: 0.1
+  #   clip_min: 0.4
+  #   clip_max: 0.6
+  # link_com_pos_2:
+  #   distribution: "normal"
+  #   mean: 0.5
+  #   std: 0.1
+  #   clip_min: 0.4
+  #   clip_max: 0.6

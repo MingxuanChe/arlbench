@@ -20,6 +20,7 @@ def make_env(
     seed: int = 0,
     env_kwargs: dict[str, Any] | None = None,
     env_params: dict[str, Any] | None = None,
+    domain_randomization: dict[str, Any] | None = None,
 ) -> Environment | Wrapper:
     """ARLBench equivalent to make_env in gymnasium/gymnax etc.
     Creates a JAX-compatible RL environment.
@@ -33,6 +34,10 @@ def make_env(
         seed (int, optional): Random seed. Defaults to 0.
         env_kwargs (dict[str, Any] | None, optional): Keyword arguments
             to pass to the environment. Defaults to None.
+        env_params (dict[str, Any] | None, optional): Static environment parameters
+            to override defaults. Defaults to None.
+        domain_randomization (dict[str, Any] | None, optional): Domain randomization
+            configuration. Defaults to None.
 
     Returns:
         Environment | Wrapper: JAX-compatible RL environment.
@@ -51,7 +56,14 @@ def make_env(
     elif env_framework == "gymnax":
         from .gymnax_env import GymnaxEnv
 
-        env = GymnaxEnv(env_name, n_envs, env_kwargs=env_kwargs, env_params=env_params)
+        env = GymnaxEnv(
+            env_name,
+            n_envs,
+            env_kwargs=env_kwargs,
+            env_params=env_params,
+            domain_randomization=domain_randomization,
+            seed=seed,
+        )
     elif env_framework == "envpool":
         from .envpool_env import EnvpoolEnv
 

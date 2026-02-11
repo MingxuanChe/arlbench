@@ -1,0 +1,41 @@
+name: "CartPole-v1"
+framework: "gymnax"
+n_total_timesteps: 1e5
+kwargs: {}
+eval_kwargs: {}
+cnn_policy: False
+deterministic_eval: True
+jax_enable_x64: False
+n_envs: 8
+
+# Static environment parameters (optional)
+env_params: {}
+
+# Domain randomization configuration
+# Each parameter can have either:
+#   - uniform distribution: specify min_value and max_value
+#   - normal distribution: specify mean, std, and optionally clip_min and clip_max
+domain_randomization:
+  masspole:
+    distribution: "uniform"
+    min_value: 0.05
+    max_value: 0.15
+  length:
+    distribution: "normal"
+    mean: 0.5
+    std: 0.1
+    clip_min: 0.3
+    clip_max: 0.7
+
+# Evaluation domain randomization (same distribution as training)
+eval_domain_randomization:
+  masspole:
+    distribution: "uniform"
+    min_value: 0.05
+    max_value: 0.15
+  length:
+    distribution: "normal"
+    mean: 0.5
+    std: 0.1
+    clip_min: 0.3
+    clip_max: 0.7

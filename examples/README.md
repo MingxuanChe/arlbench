@@ -127,6 +127,34 @@ hyperparameters:
 
 This config sets a seed for the search space as well as lists the hyperparameters to configure with the values they can take. This way we can configure the full HPO setting with only yaml files to make the process easy to follow and simple to document for others.
 
+### Domain Randomization with HyperSweeper
+
+You can also combine hyperparameter optimization with domain randomization. This is useful for training robust agents that generalize across environment parameter variations.
+
+To run random search with domain randomization on CartPole:
+
+```bash
+# Using PPO
+python run_arlbench.py --config-name=rs_ppo_cartpole_dr -m
+
+# Using DQN
+python run_arlbench.py --config-name=rs_dqn_cartpole_dr -m
+```
+
+You can customize the run with command-line overrides:
+
+```bash
+# Adjust number of trials and seed
+python run_arlbench.py --config-name=rs_ppo_cartpole_dr -m \
+  hydra.sweeper.n_trials=10 autorl.seed=42
+
+# Switch between algorithms
+python run_arlbench.py --config-name=rs_ppo_cartpole_dr -m \
+  algorithm=ppo search_space=ppo_cc environment=cc_cartpole_dr
+```
+
+The domain randomization settings are specified in the environment config files (e.g., `configs/environment/cc_cartpole_dr.yaml`). See the [Domain Randomization Guide](../DOMAIN_RANDOMIZATION_GUIDE.md) for more details on configuring environment parameter distributions.
+
 ## 2. Heuristic Schedules
 
 We can also use ARLBench to dynamically change the hyperparameter config. We provide a simple example for this in 'run_heuristic_schedule.py': as soon as the agent improves over a certain reward threshold, we decrease the exploration epsilon in DQN a bit. This is likely not the best approach in practice, so feel free to play around with this idea! To see the result, run:
