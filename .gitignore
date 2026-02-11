@@ -212,3 +212,7 @@ results/*
 runscripts_jannis/sobol/*
 runscripts_jannis/smac/*
 runscripts_jannis/pbt/*
+pixi.lock
+examples/results
+.vscode
+results*

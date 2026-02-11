@@ -674,7 +674,7 @@ def main():
         "--save_dir",
         type=str,
         default=None,
-        help="Directory to save figures (default: base_dir/distribution_shift_analysis)"
+        help="Directory to save figures (default: base_dir/shift_analysis)"
     )
     parser.add_argument(
         "--alpha",
@@ -689,7 +689,7 @@ def main():
     
     # Setup save directory
     if args.save_dir is None:
-        save_dir = base_dir / "distribution_shift_analysis"
+        save_dir = base_dir / "shift_analysis"
     else:
         save_dir = Path(args.save_dir)
     save_dir.mkdir(parents=True, exist_ok=True)

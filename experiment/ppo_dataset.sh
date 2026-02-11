@@ -68,14 +68,14 @@ search_space=ppo_cc environment=cc_pendulum
 END_TIME=$(date +%s)
 RUNTIME_LIST+=($((END_TIME - START_TIME)))
 
-# # rs_ppo_brax_halfcheetah
-# EXP_LIST+=("rs_ppo_brax_halfcheetah")
-# START_TIME=$(date +%s)
-# pixi run python run_arlbench.py --config-name=$CONFIG -m \
-# hydra.sweeper.n_trials=$NUM_TRAILS autorl.seed=$SEED_STRING algorithm=$ALGO \
-# search_space=ppo_mujoco environment=brax_halfcheetah
-# END_TIME=$(date +%s)
-# RUNTIME_LIST+=($((END_TIME - START_TIME)))
+# rs_ppo_brax_halfcheetah
+EXP_LIST+=("rs_ppo_brax_halfcheetah")
+START_TIME=$(date +%s)
+pixi run python run_arlbench.py --config-name=$CONFIG -m \
+hydra.sweeper.n_trials=$NUM_TRAILS autorl.seed=$SEED_STRING algorithm=$ALGO \
+search_space=ppo_mujoco environment=brax_halfcheetah
+END_TIME=$(date +%s)
+RUNTIME_LIST+=($((END_TIME - START_TIME)))
 
 # rs_ppo_brax_fast
 EXP_LIST+=("rs_ppo_brax_fast")

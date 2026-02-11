@@ -37,6 +37,7 @@ The ARLBench is a benchmark for HPO in RL - evaluate your HPO methods fast and o
 - **Lightning-fast JAX-Based implementations of DQN, PPO, and SAC**
 - **Compatible with many different environment domains via Gymnax, XLand and EnvPool**
 - **Representative benchmark set of HPO settings**
+- **Domain Randomization support for robust RL training** - See [Domain Randomization Guide](DOMAIN_RANDOMIZATION_GUIDE.md)
 
 <p align="center">
     <a href="./docs/images/subsets.png">
