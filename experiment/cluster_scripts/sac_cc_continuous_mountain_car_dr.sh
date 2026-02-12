@@ -4,7 +4,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --mem=64GB
 #SBATCH -J arlb_sac_cont_mc_dr
-#SBATCH -t 1-00:00:00
+#SBATCH -t 2-00:00:00
 #SBATCH --mail-type fail,end
 #SBATCH --mail-user m.che@ai.uni-hannover.de
 #SBATCH -p ai
