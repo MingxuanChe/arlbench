@@ -1,0 +1,51 @@
+defaults:
+  - _self_
+  - /algorithm: ppo
+  - /environment: cc_cartpole
+  - search_space: ppo_cc
+  - override hydra/sweeper: HyperSobol
+
+hydra:
+  sweeper:
+    n_trials: 16 # number of hyperparameter configurations
+    search_space: ${search_space}
+    sweeper_kwargs:
+      maximize: true
+      max_parallelization: 1 #  run all of it at once
+      optimizer_kwargs:
+        seed: 42  # Sobol sequence seed
+        n_sub: 1  # Number of partitions (default: no partitioning)
+        id_sub: 0  # Which partition to use (0-indexed)
+  run:
+    dir: results/sobol/${algorithm}_${autorl.env_name}/${autorl.seed}/partition_${hydra.sweeper.sweeper_kwargs.optimizer_kwargs.id_sub}_of_${hydra.sweeper.sweeper_kwargs.optimizer_kwargs.n_sub}
+  sweep:
+    dir: results/sobol/${algorithm}_${autorl.env_name}/${autorl.seed}/partition_${hydra.sweeper.sweeper_kwargs.optimizer_kwargs.id_sub}_of_${hydra.sweeper.sweeper_kwargs.optimizer_kwargs.n_sub}
+  job:
+    chdir: true
+
+load_checkpoint: ""
+jax_enable_x64: ${environment.jax_enable_x64}
+search_space.seed: 0
+seed: 42 # Base seed
+
+autorl:
+  # seed: ${seed} # by default use the base seed
+  seed: [42, 43, 44, 45, 46, 47, 48, 49, 50, 51,]  # Vectorized multi-seed execution
+  env_framework: ${environment.framework}
+  env_name: ${environment.name}
+  env_kwargs: ${environment.kwargs}
+  eval_env_kwargs: ${environment.eval_kwargs}
+  n_envs: ${environment.n_envs}
+  algorithm: ${algorithm}
+  cnn_policy: ${environment.cnn_policy}
+  deterministic_eval: ${environment.deterministic_eval}
+  nas_config: ${nas_config}
+  n_total_timesteps: ${environment.n_total_timesteps}
+  checkpoint: []
+  checkpoint_name: "default_checkpoint"
+  checkpoint_dir: "/tmp"
+  state_features: []
+  objectives: ["reward_mean"]
+  optimize_objectives: "upper"
+  n_eval_steps: 10
+  n_eval_episodes: 128

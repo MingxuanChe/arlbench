@@ -8,8 +8,8 @@
 #SBATCH -t 1-12:00:00
 #SBATCH --mail-type=all
 #SBATCH --mail-user=m.che@ai.uni-hannover.de
-#SBATCH --output experiment/cluster_scripts/log/sac_brax_halfcheetah_partitioned_%A_%a.out
-#SBATCH --error experiment/cluster_scripts/log/sac_brax_halfcheetah_partitioned_%A_%a.err
+#SBATCH --output experiment/kisski_cluster_scripts/log/sac_brax_halfcheetah_partitioned_%A_%a.out
+#SBATCH --error experiment/kisski_cluster_scripts/log/sac_brax_halfcheetah_partitioned_%A_%a.err
 
 # Partitioned Sobol Sequence: SAC on Brax HalfCheetah
 # Job array: 8 partitions (0-7) running in parallel
@@ -27,7 +27,7 @@ echo "================================================="
 N_PARTITIONS=8
 TOTAL_TRIALS=512
 TRIALS_PER_PARTITION=$((TOTAL_TRIALS / N_PARTITIONS))
-CONFIG="sobol_ppo_cartpole"
+CONFIG="part_sobol_ppo_cartpole"
 ALGO="sac"
 SEARCH_SPACE="sac_mujoco"
 ENV="brax_halfcheetah"
