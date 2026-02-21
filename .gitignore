@@ -216,3 +216,4 @@ pixi.lock
 examples/results
 .vscode
 results*
+multirun/
