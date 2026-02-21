@@ -1,17 +1,17 @@
 #!/bin/bash
 
 #SBATCH --array=0-7
-#SBATCH --cpus-per-task=4
+#SBATCH --cpus-per-task=2
 #SBATCH --gres=gpu:1
-#SBATCH --mem=128GB
-#SBATCH -J arlb_sac_hc_part
-#SBATCH -t 2-00:00:00
+#SBATCH --mem=64GB
+#SBATCH -J arlb_sac_cont_mc_part
+#SBATCH -t 1-12:00:00
 #SBATCH --mail-type=all
 #SBATCH --mail-user=m.che@ai.uni-hannover.de
-#SBATCH --output experiment/kisski_cluster_scripts/log/sac_brax_halfcheetah_partitioned_%A_%a.out
-#SBATCH --error experiment/kisski_cluster_scripts/log/sac_brax_halfcheetah_partitioned_%A_%a.err
+#SBATCH --output experiment/kisski_cluster_scripts/log/sac_cc_continuous_mountain_car_partitioned_%A_%a.out
+#SBATCH --error experiment/kisski_cluster_scripts/log/sac_cc_continuous_mountain_car_partitioned_%A_%a.err
 
-# Partitioned Sobol Sequence: SAC on Brax HalfCheetah
+# Partitioned Sobol Sequence: SAC on Classic Control Continuous Mountain Car
 # Job array: 8 partitions (0-7) running in parallel
 # Seeds: 42-91 (50 seeds)
 # Total: 512 trials per seed (64 trials per partition)
@@ -29,8 +29,8 @@ TOTAL_TRIALS=512
 TRIALS_PER_PARTITION=$((TOTAL_TRIALS / N_PARTITIONS))
 CONFIG="part_sobol_ppo_cartpole"
 ALGO="sac"
-SEARCH_SPACE="sac_mujoco"
-ENV="brax_halfcheetah"
+SEARCH_SPACE="sac_cc"
+ENV="cc_continuous_mountain_car"
 SOBOL_SEED=42
 PARTITION_ID=$SLURM_ARRAY_TASK_ID
 
@@ -86,8 +86,8 @@ echo "================================================="
 #     pixi run python merge_sobol_partitions.py \
 #         --base-dir multirun \
 #         --algorithm sac \
-#         --environment brax_halfcheetah \
+#         --environment cc_continuous_mountain_car \
 #         --seed $seed
 # done
 #
-# Merged results will be in: multirun/sac_brax_halfcheetah/{seed}/merged/
+# Merged results will be in: multirun/sac_cc_continuous_mountain_car/{seed}/merged/

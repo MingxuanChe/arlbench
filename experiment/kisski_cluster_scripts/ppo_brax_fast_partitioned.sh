@@ -13,7 +13,7 @@
 
 # Partitioned Sobol Sequence: PPO on Brax Fast
 # Job array: 8 partitions (0-7) running in parallel
-# Seeds: 42-71 (30 seeds)
+# Seeds: 42-91 (50 seeds)
 # Total: 512 trials per seed (64 trials per partition)
 
 echo "================================================="
@@ -42,11 +42,11 @@ echo "  Partition ID: $PARTITION_ID"
 echo "  Sobol Seed: $SOBOL_SEED"
 echo ""
 
-cd $BIGWORK/Repo/arlbench
+cd $HOME/Repos/arlbench
 
 # Build seed list
 SEED_LIST=()
-for SEED in {42..71}
+for SEED in {42..91}
 do
   SEED_LIST+=($SEED)
 done
