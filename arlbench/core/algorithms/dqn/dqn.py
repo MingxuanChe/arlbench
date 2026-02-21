@@ -16,6 +16,7 @@ from ConfigSpace import (
     Categorical,
     Configuration,
     ConfigurationSpace,
+    Constant,
     EqualsCondition,
     Float,
     Integer,
@@ -200,8 +201,19 @@ class DQN(Algorithm):
             self.buffer = self.buffer.replace(sample=sample_fn)
 
     @staticmethod
-    def get_hpo_config_space(seed: int | None = None) -> ConfigurationSpace:
-        """Returns the hyperparameter optimization (HPO) configuration space for DQN."""
+    def get_hpo_config_space(seed: int | None = None, use_constants: bool = True) -> ConfigurationSpace:
+        """Returns the hyperparameter optimization (HPO) configuration space for DQN.
+
+        Args:
+            seed (int | None, optional): Random seed for the configuration space. Defaults to None.
+            use_constants (bool, optional): If True, ``use_target_network`` and
+                ``buffer_prio_sampling`` are fixed as ``Constant(value=True)`` so
+                they are always True and all dependent hyperparameters are
+                unconditionally active in the search space.
+                If False, they are searchable ``Categorical`` s with
+                ``EqualsCondition`` s, making dependent HPs conditional.
+                Defaults to True.
+        """
         # defaults from https://stable-baselines3.readthedocs.io/en/master/modules/dqn.html
         cs = ConfigurationSpace(
             name="DQNConfigSpace",
@@ -213,8 +225,10 @@ class DQN(Algorithm):
                 "buffer_batch_size": Categorical(
                     "buffer_batch_size", [4, 8, 16, 32, 64], default=16
                 ),
-                "buffer_prio_sampling": Categorical(
-                    "buffer_prio_sampling", [True, False], default=False
+                "buffer_prio_sampling": (
+                    Constant("buffer_prio_sampling", value=True)
+                    if use_constants
+                    else Categorical("buffer_prio_sampling", [True, False], default=False)
                 ),
                 "buffer_alpha": Float("buffer_alpha", (0.01, 1.0), default=0.9),
                 "buffer_beta": Float("buffer_beta", (0.01, 1.0), default=0.9),
@@ -227,8 +241,10 @@ class DQN(Algorithm):
                 "initial_epsilon": Float("initial_epsilon", (0.5, 1.0), default=1.0),
                 "target_epsilon": Float("target_epsilon", (0.001, 0.2), default=0.05),
                 "exploration_fraction": Float("exploration_fraction", (0.005, 0.5), default=0.1),
-                "use_target_network": Categorical(
-                    "use_target_network", [True, False], default=True
+                "use_target_network": (
+                    Constant("use_target_network", value=True)
+                    if use_constants
+                    else Categorical("use_target_network", [True, False], default=True)
                 ),
                 "train_freq": Integer("train_freq", (1, 256), default=4),
                 "gradient steps": Integer("gradient_steps", (1, 256), default=1),
@@ -241,15 +257,15 @@ class DQN(Algorithm):
                 ),
             },
         )
-        cs.add_conditions(
-            [
-                EqualsCondition(
-                    cs["target_update_interval"], cs["use_target_network"], True
-                ),
-                EqualsCondition(cs["tau"], cs["use_target_network"], True),
-            ]
-        )
-
+        if not use_constants:
+            cs.add_conditions(
+                [
+                    EqualsCondition(
+                        cs["target_update_interval"], cs["use_target_network"], True
+                    ),
+                    EqualsCondition(cs["tau"], cs["use_target_network"], True),
+                ]
+            )
         return cs
 
     @staticmethod

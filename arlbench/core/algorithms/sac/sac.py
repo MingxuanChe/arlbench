@@ -16,6 +16,7 @@ from ConfigSpace import (
     Categorical,
     Configuration,
     ConfigurationSpace,
+    Constant,
     EqualsCondition,
     Float,
     Integer,
@@ -221,8 +222,19 @@ class SAC(Algorithm):
         )
 
     @staticmethod
-    def get_hpo_config_space(seed: int | None = None) -> ConfigurationSpace:
-        """Returns the hyperparameter configuration space for SAC."""
+    def get_hpo_config_space(seed: int | None = None, use_constants: bool = True) -> ConfigurationSpace:
+        """Returns the hyperparameter configuration space for SAC.
+
+        Args:
+            seed (int | None, optional): Random seed for the configuration space. Defaults to None.
+            use_constants (bool, optional): If True, ``use_target_network`` and
+                ``buffer_prio_sampling`` are fixed as ``Constant(value=True)`` so
+                they are always True and all dependent hyperparameters are
+                unconditionally active in the search space.
+                If False, they are searchable ``Categorical`` s with
+                ``EqualsCondition`` s, making dependent HPs conditional.
+                Defaults to True.
+        """
         cs = ConfigurationSpace(
             name="SACConfigSpace",
             seed=seed,
@@ -231,8 +243,10 @@ class SAC(Algorithm):
                 "buffer_batch_size": Categorical(
                     "buffer_batch_size", [64, 128, 256, 512], default=256
                 ),
-                "buffer_prio_sampling": Categorical(
-                    "buffer_prio_sampling", [True, False], default=False
+                "buffer_prio_sampling": (
+                    Constant("buffer_prio_sampling", value=True)
+                    if use_constants
+                    else Categorical("buffer_prio_sampling", [True, False], default=False)
                 ),
                 "buffer_alpha": Float("buffer_alpha", (0.01, 1.0), default=0.9),
                 "buffer_beta": Float("buffer_beta", (0.01, 1.0), default=0.9),
@@ -243,8 +257,10 @@ class SAC(Algorithm):
                 "gradient_steps": Integer("gradient_steps", (1, int(1e5)), default=1),
                 "gamma": Float("gamma", (0.8, 1.0), default=0.99),
                 "tau": Float("tau", (0.01, 1.0), default=1.0),
-                "use_target_network": Categorical(
-                    "use_target_network", [True, False], default=True
+                "use_target_network": (
+                    Constant("use_target_network", value=True)
+                    if use_constants
+                    else Categorical("use_target_network", [True, False], default=True)
                 ),
                 "train_freq": Integer("train_freq", (1, 128), default=1),
                 "learning_starts": Integer("learning_starts", (0, 1024), default=128),
@@ -258,13 +274,13 @@ class SAC(Algorithm):
                 ),
             },
         )
-        cs.add_conditions([
-            EqualsCondition(
-                cs["target_update_interval"], cs["use_target_network"], True
-            ),
-            EqualsCondition(cs["tau"], cs["use_target_network"], True)
-        ])
-
+        if not use_constants:
+            cs.add_conditions([
+                EqualsCondition(
+                    cs["target_update_interval"], cs["use_target_network"], True
+                ),
+                EqualsCondition(cs["tau"], cs["use_target_network"], True),
+            ])
         return cs
 
     @staticmethod

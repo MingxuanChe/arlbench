@@ -27,11 +27,8 @@ hyperparameters:
     default: 1e-6
     log: true
   hp_config.buffer_prio_sampling:
-    type: categorical
-    choices:
-      - true
-      - false
-    default: false
+    type: constant
+    value: true
   hp_config.buffer_size:
     type: uniform_int
     upper: 10000000
@@ -63,11 +60,8 @@ hyperparameters:
     default: 128
     log: false
   hp_config.use_target_network:
-    type: categorical
-    choices:
-      - true
-      - false
-    default: true
+    type: constant
+    value: true
   hp_config.target_update_interval:
     type: uniform_int
     upper: 1000
@@ -80,24 +74,4 @@ hyperparameters:
     lower: 0.01
     default: 1.0
     log: false
-conditions:
-  - child: hp_config.target_update_interval
-    parent: hp_config.use_target_network
-    value: true
-    type: EQ
-  - child: hp_config.tau
-    parent: hp_config.use_target_network
-    value: true
-    type: EQ
-  - child: hp_config.buffer_epsilon
-    parent: hp_config.buffer_prio_sampling
-    value: true
-    type: EQ
-  - child: hp_config.buffer_alpha
-    parent: hp_config.buffer_prio_sampling
-    value: true
-    type: EQ
-  - child: hp_config.buffer_beta
-    parent: hp_config.buffer_prio_sampling
-    value: true
-    type: EQ
+conditions: []
