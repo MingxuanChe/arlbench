@@ -11,27 +11,21 @@ n_envs: 8
 env_params: {}
 
 # Domain randomization configuration for Acrobot-v1
+# Nominal values: link_mass_1=1.0, link_mass_2=1.0
+# Randomizing only masses (2 dimensions) for simplicity
 domain_randomization:
-  # link_length_1:
-  #   distribution: "uniform"
-  #   min_value: 0.8   # 80% of default (1.0)
-  #   max_value: 1.2   # 120% of default
-  # link_length_2:
-  #   distribution: "uniform"
-  #   min_value: 0.8   # 80% of default (1.0)
-  #   max_value: 1.2   # 120% of default
   link_mass_1:
     distribution: "normal"
-    mean: 1.0
-    std: 0.2         # 20% std
-    clip_min: 0.7    # 70% of default
-    clip_max: 1.3    # 130% of default
+    mean: 1.0        # Nominal value
+    std: 0.3         # 30% std
+    clip_min: 0.5    # 50% of nominal
+    clip_max: 1.5    # 150% of nominal
   link_mass_2:
     distribution: "normal"
-    mean: 1.0
-    std: 0.2         # 20% std
-    clip_min: 0.7    # 70% of default
-    clip_max: 1.3    # 130% of default
+    mean: 1.0        # Nominal value
+    std: 0.3         # 30% std
+    clip_min: 0.5    # 50% of nominal
+    clip_max: 1.5    # 150% of nominal
   # link_com_pos_1:
   #   distribution: "normal"
   #   mean: 0.5
@@ -47,35 +41,15 @@ domain_randomization:
 
 # Evaluation domain randomization (same distribution as training)
 eval_domain_randomization:
-  # link_length_1:
-  #   distribution: "uniform"
-  #   min_value: 0.8
-  #   max_value: 1.2
-  # link_length_2:
-  #   distribution: "uniform"
-  #   min_value: 0.8
-  #   max_value: 1.2
   link_mass_1:
     distribution: "normal"
     mean: 1.0
-    std: 0.2
-    clip_min: 0.7
-    clip_max: 1.3
+    std: 0.3
+    clip_min: 0.5
+    clip_max: 1.5
   link_mass_2:
     distribution: "normal"
     mean: 1.0
-    std: 0.2
-    clip_min: 0.7
-    clip_max: 1.3
-  # link_com_pos_1:
-  #   distribution: "normal"
-  #   mean: 0.5
-  #   std: 0.1
-  #   clip_min: 0.4
-  #   clip_max: 0.6
-  # link_com_pos_2:
-  #   distribution: "normal"
-  #   mean: 0.5
-  #   std: 0.1
-  #   clip_min: 0.4
-  #   clip_max: 0.6
+    std: 0.3
+    clip_min: 0.5
+    clip_max: 1.5

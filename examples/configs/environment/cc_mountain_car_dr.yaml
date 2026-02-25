@@ -11,27 +11,28 @@ n_envs: 8
 env_params: {}
 
 # Domain randomization configuration for MountainCar-v0
+# Nominal values: force=0.001, gravity=0.0025
 domain_randomization:
   force:
     distribution: "normal"
-    mean: 0.001
-    std: 0.0002      # 20% std
-    clip_min: 0.0007 # 70% of default
-    clip_max: 0.0013 # 130% of default
+    mean: 0.001      # Nominal value
+    std: 0.0003      # 30% std
+    clip_min: 0.0005 # 50% of nominal
+    clip_max: 0.0015 # 150% of nominal
   gravity:
     distribution: "uniform"
-    min_value: 0.002   # 80% of default (0.0025)
-    max_value: 0.003   # 120% of default
+    min_value: 0.0015  # 60% of nominal (0.0025)
+    max_value: 0.0035  # 140% of nominal
 
 # Evaluation domain randomization (same distribution as training)
 eval_domain_randomization:
   force:
     distribution: "normal"
     mean: 0.001
-    std: 0.0002
-    clip_min: 0.0007
-    clip_max: 0.0013
+    std: 0.0003
+    clip_min: 0.0005
+    clip_max: 0.0015
   gravity:
     distribution: "uniform"
-    min_value: 0.002
-    max_value: 0.003
+    min_value: 0.0015
+    max_value: 0.0035

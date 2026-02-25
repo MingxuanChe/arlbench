@@ -11,21 +11,19 @@ n_envs: 8
 # Static environment parameters (optional)
 env_params: {}
 
-# Domain randomization configuration
-# Each parameter can have either:
-#   - uniform distribution: specify min_value and max_value
-#   - normal distribution: specify mean, std, and optionally clip_min and clip_max
+# Domain randomization configuration for CartPole-v1
+# Nominal values: masspole=0.1, length=0.5
 domain_randomization:
   masspole:
     distribution: "uniform"
-    min_value: 0.05
-    max_value: 0.15
+    min_value: 0.05   # 50% of nominal (0.1)
+    max_value: 0.15   # 150% of nominal
   length:
     distribution: "normal"
-    mean: 0.5
-    std: 0.1
-    clip_min: 0.3
-    clip_max: 0.7
+    mean: 0.5         # Nominal value
+    std: 0.1          # 20% std
+    clip_min: 0.3     # 60% of nominal
+    clip_max: 0.7     # 140% of nominal
 
 # Evaluation domain randomization (same distribution as training)
 eval_domain_randomization:
