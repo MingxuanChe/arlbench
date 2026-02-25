@@ -1,14 +1,14 @@
 #!/bin/bash
 
 #SBATCH --array=0-7
-#SBATCH --cpus-per-task=32
+#SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:1
-#SBATCH --mem=64GB
+#SBATCH --mem=32GB
 #SBATCH -J arlb_sac_cmc_dr_part
-#SBATCH -t 2-00:00:00
-#SBATCH --mail-type fail,end
+#SBATCH -t 0-12:00:00
+#SBATCH --mail-type all
 #SBATCH --mail-user m.che@ai.uni-hannover.de
-#SBATCH -p ai
+#SBATCH -p ai,tnt
 #SBATCH --output experiment/cluster_scripts/log/sac_continuous_mountain_car_dr_partitioned_%A_%a.out
 #SBATCH --error experiment/cluster_scripts/log/sac_continuous_mountain_car_dr_partitioned_%A_%a.err
 
@@ -72,7 +72,7 @@ python run_arlbench.py --config-name=$CONFIG -m \
     hydra.sweeper.sweeper_kwargs.optimizer_kwargs.seed=$SOBOL_SEED \
     hydra.sweeper.sweeper_kwargs.optimizer_kwargs.n_sub=$N_PARTITIONS \
     hydra.sweeper.sweeper_kwargs.optimizer_kwargs.id_sub=$PARTITION_ID \
-    hydra.sweep.dir="multirun/${ALGO}_${ENV}/\${autorl.seed}/partition_${PARTITION_ID}_of_${N_PARTITIONS}"
+    hydra.sweep.dir="multirun/sac_cc_continuous_mountain_car_dr/\${autorl.seed}/partition_${PARTITION_ID}_of_${N_PARTITIONS}"
 
 echo "================================================="
 echo "Job finished at: $(date)"
