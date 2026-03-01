@@ -5,12 +5,12 @@
 #SBATCH --gres=gpu:1
 #SBATCH --mem=16GB
 #SBATCH -J arlb_ppo_pend_dr_part
-#SBATCH -t 0-12:00:00
+#SBATCH -t 0-6:00:00
 #SBATCH --mail-type all
 #SBATCH --mail-user m.che@ai.uni-hannover.de
 #SBATCH -p ai,tnt
-#SBATCH --output experiment/cluster_scripts/log/ppo_pendulum_dr_partitioned_%A_%a.out
-#SBATCH --error experiment/cluster_scripts/log/ppo_pendulum_dr_partitioned_%A_%a.err
+#SBATCH --output experiment/luis_cluster_scripts/log/ppo_pendulum_dr_partitioned_%A_%a.out
+#SBATCH --error experiment/luis_cluster_scripts/log/ppo_pendulum_dr_partitioned_%A_%a.err
 
 # Partitioned Sobol Sequence: PPO on Pendulum with Domain Randomization
 # Job array: 8 partitions (0-7) running in parallel
