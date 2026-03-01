@@ -18,7 +18,7 @@ Evaluation protocol
 3. **HPO reliability**: Compute the mean and variance of {S_1, …, S_N}.
    - ``hpo_mean``              : E[S_i]           – expected transferred performance
    - ``hpo_std`` / ``hpo_var`` : spread of S_i    – HPO stability / reliability
-   - ``hpo_mean_var_score``    : E – α·Var(S_i)   – risk-averse aggregate
+   - ``target_mean_var_score`` : E[S_i] – α·Var(S_i) – risk-averse aggregate on target
    - ``hpo_worst_case_score``  : min(S_i)          – worst observed score
 
 Selection criteria used to identify each run's incumbent:
@@ -704,7 +704,7 @@ def run_comparison(
 
     - ``hpo_mean``              : E[S_i]  – expected transferred performance
     - ``hpo_std`` / ``hpo_var`` : spread of S_i – HPO stability / reliability
-    - ``hpo_mean_var_score``    : E[S_i] − α·Var(S_i)  (risk-averse)
+    - ``target_mean_var_score`` : E[S_i] − α·Var(S_i)  (risk-averse, evaluated on target)
     - ``hpo_worst_case_score``  : min(S_i)  (worst observed score across all incumbents)
     """
     results: dict[str, dict] = {}
@@ -778,7 +778,7 @@ def run_comparison(
             "hpo_var":              float(incumbent_scores.var()),
             "hpo_min":              float(incumbent_scores.min()),
             "hpo_max":              float(incumbent_scores.max()),
-            "hpo_mean_var_score":   float(
+            "target_mean_var_score": float(
                 incumbent_scores.mean() - alpha * incumbent_scores.var()
             ),
             "hpo_worst_case_score": float(incumbent_scores.min()),
@@ -802,7 +802,7 @@ def print_comparison(
 
       hpo_mean              E[S_i]          – expected transferred performance
       hpo_std / hpo_var     spread of S_i   – HPO stability
-      hpo_mean_var_score    E[S_i] − α·Var  – risk-averse aggregate
+      target_mean_var_score  E[S_i] − α·Var  – risk-averse aggregate on target
       hpo_worst_case_score  min(S_i)        – worst observed score
     """
     sep = "=" * 80
@@ -833,7 +833,7 @@ def print_comparison(
         ("E[S_i]  mean perf.",             "hpo_mean",             ".4f"),
         ("Std[S_i]  HPO instability",       "hpo_std",              ".4f"),
         ("Var[S_i]  HPO variance",          "hpo_var",              ".4f"),
-        (f"E[S_i] − α·Var  (α={alpha})",   "hpo_mean_var_score",   ".4f"),
+        (f"E[S_i] − α·Var  (α={alpha})",   "target_mean_var_score", ".4f"),
         ("Worst-case  min(S_i)",             "hpo_worst_case_score", ".4f"),
         ("Min S_i",                         "hpo_min",              ".4f"),
         ("Max S_i",                         "hpo_max",              ".4f"),
@@ -920,7 +920,7 @@ def save_comparison(
             "hpo_var":              r["hpo_var"],
             "hpo_min":              r["hpo_min"],
             "hpo_max":              r["hpo_max"],
-            "hpo_mean_var_score":   r["hpo_mean_var_score"],
+            "target_mean_var_score": r["target_mean_var_score"],
             "hpo_worst_case_score": r["hpo_worst_case_score"],
             "alpha":                alpha,
         })
@@ -1047,7 +1047,7 @@ def save_comparison(
                 "hpo_var":              results[m]["hpo_var"],
                 "hpo_min":              results[m]["hpo_min"],
                 "hpo_max":              results[m]["hpo_max"],
-                "hpo_mean_var_score":   results[m]["hpo_mean_var_score"],
+                "target_mean_var_score": results[m]["target_mean_var_score"],
                 "hpo_worst_case_score": results[m]["hpo_worst_case_score"],
             },
             "incumbent_scores": [float(s) for s in inc_scores],
@@ -1108,7 +1108,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--n-eval-episodes",     type=int,   default=None, help="Eval episodes override.")
 
     # ── Metric coefficients ────────────────────────────────────────────────────
-    p.add_argument("--alpha", type=float, default=1.0,  help="Variance penalty: used in mean − alpha·Var for RAHBO/ERAHBO selection and the hpo_mean_var_score metric.")
+    p.add_argument("--alpha", type=float, default=1.0,  help="Variance penalty α: used in mean − α·Var for RAHBO/ERAHBO selection and the target_mean_var_score / source_mean_var_score metrics.")
 
     # ── Output ────────────────────────────────────────────────────────────────
     p.add_argument("--output-dir",  default=None,   help="Override output directory.")

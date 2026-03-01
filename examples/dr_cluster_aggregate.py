@@ -86,23 +86,22 @@ def compute_metrics(group: List[dict]) -> dict:
     src_vars = np.array([float(r.get("source_score_var", float("nan"))) for r in group])
     gaps     = np.array([transfer_gap(s, t) for s, t in zip(src, scores)])
     alpha_val = float(group[0]["alpha"])
-    hpo_criterion = float(scores.mean() - alpha_val * scores.var())
-    # Source criterion: mean − α·Var evaluated per incumbent on source domain
-    # (this is the objective the BO methods directly optimise)
-    src_criteria = src - alpha_val * src_vars
+    target_mean_var = float(scores.mean() - alpha_val * scores.var())
+    # Source mean−α·Var per incumbent on source domain (the BO training objective)
+    src_mean_var = src - alpha_val * src_vars
     return {
-        "n_incumbents":          len(group),
-        "target_score_mean":     float(scores.mean()),
-        "target_score_std":      float(scores.std()),
-        "target_score_min":      float(scores.min()),
-        "target_score_max":      float(scores.max()),
-        "hpo_worst_case":        float(scores.min()),
-        "hpo_mean_var_score":    hpo_criterion,
-        "transfer_gap_mean":     float(np.nanmean(gaps)),
-        "transfer_gap_std":      float(np.nanstd(gaps)),
-        "source_score_mean":     float(src.mean()),
-        "source_score_var_mean": float(np.nanmean(src_vars)),
-        "source_criterion_mean": float(np.nanmean(src_criteria)),  # E[μ−α·Var] on source
+        "n_incumbents":               len(group),
+        "target_score_mean":          float(scores.mean()),
+        "target_score_std":           float(scores.std()),
+        "target_score_min":           float(scores.min()),
+        "target_score_max":           float(scores.max()),
+        "hpo_worst_case":             float(scores.min()),
+        "target_mean_var_score":      target_mean_var,
+        "transfer_gap_mean":          float(np.nanmean(gaps)),
+        "transfer_gap_std":           float(np.nanstd(gaps)),
+        "source_score_mean":          float(src.mean()),
+        "source_score_var_mean":      float(np.nanmean(src_vars)),
+        "source_mean_var_score_mean": float(np.nanmean(src_mean_var)),  # E[μ−α·Var] on source
     }
 
 
@@ -178,7 +177,7 @@ def main() -> None:
                     "run_idx":           r["run_idx"],
                     "source_score":      r["source_score"],
                     "source_score_var":  src_var_i,
-                    "source_criterion":  r["source_score"] - float(alpha) * src_var_i,
+                    "source_mean_var_score": r["source_score"] - float(alpha) * src_var_i,
                     "target_score":      s,
                     "transfer_gap":      transfer_gap(r["source_score"], s),
                     "task_id":           r["task_id"],
@@ -196,7 +195,7 @@ def main() -> None:
         df_scores.to_csv(scores_path,  index=False)
         print(f"\n  α={alpha:g}:")
         print(df_summary[["method", "target_score_mean", "target_score_std",
-                            "hpo_worst_case", "hpo_mean_var_score",
+                            "hpo_worst_case", "target_mean_var_score",
                             "transfer_gap_mean"]].to_string(index=False))
         print(f"  Saved → {summ_path}")
         print(f"  Saved → {scores_path}")
