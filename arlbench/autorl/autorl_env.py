@@ -125,6 +125,7 @@ class AutoRLEnv(gymnasium.Env):
             domain_randomization=self._config.get("domain_randomization", None),
         )
 
+        # Create eval env - if domain randomization is used, we'll copy params after
         self._eval_env = make_env(
             self._config["env_framework"],
             self._config["env_name"],
@@ -133,8 +134,14 @@ class AutoRLEnv(gymnasium.Env):
             cnn_policy=self._config["cnn_policy"],
             seed=init_seed + 1,
             env_params=self._config.get("env_eval_params", None),
-            domain_randomization=self._config.get("eval_domain_randomization", None),
+            domain_randomization=None,  # Don't randomize eval env separately
         )
+        
+        # If domain randomization is used, copy the exact randomized parameters
+        # from training env to eval env (so they evaluate on the same conditions)
+        if self._config.get("domain_randomization", None) and hasattr(self._env, "env_params"):
+            self._eval_env.env_params = self._env.env_params
+            self._eval_env._use_domain_randomization = True
 
         # Checkpointing
         self._checkpoints = []
