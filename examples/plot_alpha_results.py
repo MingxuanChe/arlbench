@@ -10,18 +10,25 @@ function of the risk-aversion parameter α:
     3. Mean-variance score       E[S_i] − α · Var[S_i]
     4. Worst-case score          min(S_i)  (worst observed incumbent score)
 
-Data sources (written by plot_alpha_sweep.py / dr_compare_methods.py):
+Data sources — sweep pipeline (written by plot_alpha_sweep.py / dr_compare_methods.py):
     <sweep_dir>/alpha_<a>/comparison_summary.csv   – aggregate stats
     <sweep_dir>/alpha_<a>/incumbent_scores.csv     – per-run S_i values
 
+Data sources — cluster pipeline (written by dr_cluster_aggregate.py):
+    <cluster_dir>/comparison_summary_all.csv       – aggregate stats (all alphas)
+    <cluster_dir>/incumbent_scores_a<a>.csv        – per-run S_i values per alpha
+
 Usage
 -----
+# Sweep pipeline (legacy):
 python examples/plot_alpha_results.py \\
     --sweep-dir results/alpha_sweep/ppo_acrobot \\
     --failure-threshold -150
 
-# Re-use default paths (same defaults as plot_alpha_sweep.py):
-python examples/plot_alpha_results.py
+# Cluster pipeline:
+python examples/plot_alpha_results.py \\
+    --cluster-dir results/cluster_eval/ppo_cc_acrobot_dr \\
+    --env-config cc_acrobot_dr --algorithm ppo
 """
 
 from __future__ import annotations
@@ -226,23 +233,109 @@ def load_sweep_data(
                         "transfer_gap":  float(gap_vec[run_idx]),
                     })
 
+            # Support both old name (hpo_mean_var_score) and new name (target_mean_var_score)
+            mv_score = float(
+                row.get("target_mean_var_score",
+                row.get("hpo_mean_var_score", float("nan")))
+            )
             summary_rows.append({
-                "alpha":                 alpha,
-                "method":                method,
-                "n_incumbents":          n_inc,
-                "hpo_mean":              float(row["hpo_mean"]),
-                "hpo_std":               float(row["hpo_std"]),
-                "hpo_var":               float(row["hpo_var"]),
-                "hpo_min":               float(row["hpo_min"]),
-                "hpo_max":               float(row["hpo_max"]),
-                "hpo_mean_var_score":    float(row["hpo_mean_var_score"]),
-                "hpo_worst_case_score":  float(row["hpo_worst_case_score"]),
+                "alpha":                  alpha,
+                "method":                 method,
+                "n_incumbents":           n_inc,
+                "hpo_mean":               float(row["hpo_mean"]),
+                "hpo_std":                float(row["hpo_std"]),
+                "hpo_var":                float(row["hpo_var"]),
+                "hpo_min":                float(row["hpo_min"]),
+                "hpo_max":                float(row["hpo_max"]),
+                "target_mean_var_score":  mv_score,
+                "hpo_worst_case_score":   float(row["hpo_worst_case_score"]),
             })
 
         print(f"  Loaded α={alpha:g}  ({[r['method'] for r in summary_rows if r['alpha'] == alpha]})")
 
     summary_df = pd.DataFrame(summary_rows)
     scores_df  = pd.DataFrame(score_rows)
+    return summary_df, scores_df
+
+
+def load_cluster_data(cluster_dir: Path) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Load results produced by ``dr_cluster_aggregate.py``.
+
+    Reads
+    -----
+    ``<cluster_dir>/comparison_summary_all.csv``
+        One row per (alpha, method).  Columns written by the cluster pipeline
+        are normalised to the same names used by :func:`load_sweep_data`.
+
+    ``<cluster_dir>/incumbent_scores_a<alpha>.csv``
+        One row per (alpha, method, run_idx).  Provides per-incumbent S_i
+        for violin / ridge plots.
+
+    Returns
+    -------
+    Same ``(summary_df, scores_df)`` pair as :func:`load_sweep_data`.
+    """
+    summary_path = cluster_dir / "comparison_summary_all.csv"
+    if not summary_path.exists():
+        raise FileNotFoundError(
+            f"comparison_summary_all.csv not found in '{cluster_dir}'.\n"
+            "Run dr_cluster_aggregate.py first."
+        )
+
+    raw = pd.read_csv(summary_path)
+    # Map cluster column names → plot_alpha_results internal names
+    col_map = {
+        "target_score_mean":       "hpo_mean",
+        "target_score_std":        "hpo_std",
+        "target_score_min":        "hpo_min",
+        "target_score_max":        "hpo_max",
+        "hpo_worst_case":          "hpo_worst_case_score",
+        "target_mean_var_score":   "target_mean_var_score",  # keep as-is
+    }
+    raw = raw.rename(columns=col_map)
+    # Add hpo_var from std
+    if "hpo_var" not in raw.columns and "hpo_std" in raw.columns:
+        raw["hpo_var"] = raw["hpo_std"] ** 2
+    # Ensure backwards-compat alias
+    if "target_mean_var_score" in raw.columns:
+        raw["hpo_mean_var_score"] = raw["target_mean_var_score"]
+
+    summary_rows = []
+    for _, row in raw.iterrows():
+        summary_rows.append({
+            "alpha":                  float(row["alpha"]),
+            "method":                 str(row["method"]).lower(),
+            "n_incumbents":           int(row.get("n_incumbents", 1)),
+            "hpo_mean":               float(row["hpo_mean"]),
+            "hpo_std":                float(row.get("hpo_std", float("nan"))),
+            "hpo_var":                float(row.get("hpo_var", float("nan"))),
+            "hpo_min":                float(row.get("hpo_min", float("nan"))),
+            "hpo_max":                float(row.get("hpo_max", float("nan"))),
+            "target_mean_var_score":  float(row.get("target_mean_var_score", float("nan"))),
+            "hpo_worst_case_score":   float(row.get("hpo_worst_case_score", float("nan"))),
+        })
+    summary_df = pd.DataFrame(summary_rows)
+
+    # Per-incumbent scores from incumbent_scores_a<alpha>.csv files
+    score_rows: list[dict] = []
+    alphas = sorted(summary_df["alpha"].unique())
+    for alpha in alphas:
+        inc_path = cluster_dir / f"incumbent_scores_a{alpha:g}.csv"
+        if not inc_path.exists():
+            continue
+        inc = pd.read_csv(inc_path)
+        for _, row in inc.iterrows():
+            score_rows.append({
+                "alpha":         float(row["alpha"]),
+                "method":        str(row["method"]).lower(),
+                "incumbent_idx": int(row.get("run_idx", 0)),
+                "score_S_i":     float(row.get("target_score", float("nan"))),
+                "source_score":  float(row.get("source_score", float("nan"))),
+                "transfer_gap":  float(row.get("transfer_gap", float("nan"))),
+            })
+        print(f"  Loaded α={alpha:g}  ({sorted(inc['method'].unique().tolist())})")
+
+    scores_df = pd.DataFrame(score_rows)
     return summary_df, scores_df
 
 
@@ -529,9 +622,9 @@ def plot_aggregated_metrics(
         ("hpo_std",
          "Std[S_i]",
          "Standard deviation"),
-        ("hpo_mean_var_score",
+        ("target_mean_var_score",
          "E[S_i] − α·Var[S_i]",
-         "Mean-variance score"),
+         "Mean-variance score (target)"),
         ("hpo_worst_case_score",
          "Worst-case  min(S_i)",
          "Worst-case score  min(S_i)"),
@@ -719,13 +812,13 @@ def print_table(
         print(header)
         print("  " + "─" * (len(header) - 2))
         for col, label in [
-            ("hpo_mean",            "Mean performance E[S_i]"),
-            ("hpo_std",             "Std deviation Std[S_i]"),
-            ("hpo_var",             "Variance Var[S_i]"),
-            ("hpo_mean_var_score",  f"Mean-var  E−α·Var (α={alpha:g})"),
-            ("hpo_worst_case_score", "Worst-case  min(S_i)"),
-            ("hpo_min",             "Min S_i"),
-            ("hpo_max",             "Max S_i"),
+            ("hpo_mean",               "Mean performance E[S_i]"),
+            ("hpo_std",                "Std deviation Std[S_i]"),
+            ("hpo_var",                "Variance Var[S_i]"),
+            ("target_mean_var_score",  f"Mean-var  E−α·Var on target (α={alpha:g})"),
+            ("hpo_worst_case_score",   "Worst-case  min(S_i)"),
+            ("hpo_min",                "Min S_i"),
+            ("hpo_max",                "Max S_i"),
         ]:
             row = f"  {label:<33}"
             for m in present:
@@ -742,8 +835,11 @@ def build_parser() -> argparse.ArgumentParser:
         description="Plot aggregated HPO-reliability metrics from alpha-sweep results.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    p.add_argument("--sweep-dir",         default=DEFAULT_SWEEP_DIR,
-                   help="Directory containing alpha_* subdirectories.")
+    p.add_argument("--sweep-dir",         default=None,
+                   help="Directory containing alpha_* subdirectories (sweep pipeline).")
+    p.add_argument("--cluster-dir",       default=None,
+                   help="Directory written by dr_cluster_aggregate.py "
+                        "(contains comparison_summary_all.csv).")
     p.add_argument("--failure-threshold", type=float, default=DEFAULT_FAILURE_THRESH,
                    help="S_i below this value counts as a failure.")
     p.add_argument("--output-dir",        default=None,
@@ -765,17 +861,32 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> None:
     import matplotlib.ticker   # needed for PercentFormatter used inside plot fn
 
-    args       = build_parser().parse_args()
-    sweep_dir  = Path(args.sweep_dir)
-    output_dir = Path(args.output_dir) if args.output_dir else sweep_dir
+    args = build_parser().parse_args()
+
+    if args.cluster_dir and args.sweep_dir:
+        sys.exit("ERROR: specify either --cluster-dir or --sweep-dir, not both.")
+    if not args.cluster_dir and not args.sweep_dir:
+        # default: sweep dir for backwards compat
+        args.sweep_dir = DEFAULT_SWEEP_DIR
+
+    if args.cluster_dir:
+        data_dir   = Path(args.cluster_dir)
+        data_label = f"Cluster dir      : {data_dir}"
+        loader     = lambda: load_cluster_data(data_dir)
+    else:
+        data_dir   = Path(args.sweep_dir)
+        data_label = f"Sweep dir        : {data_dir}"
+        loader     = lambda: load_sweep_data(data_dir)
+
+    output_dir = Path(args.output_dir) if args.output_dir else data_dir
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"Sweep dir        : {sweep_dir}")
+    print(data_label)
     print(f"Output dir       : {output_dir}")
     print(f"Failure threshold: {args.failure_threshold}")
     print()
 
-    summary_df, scores_df = load_sweep_data(sweep_dir)
+    summary_df, scores_df = loader()
 
     if summary_df.empty:
         print("No data loaded \u2013 nothing to plot.")
