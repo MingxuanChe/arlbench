@@ -78,6 +78,9 @@ def main() -> None:
     parser.add_argument("--methods",     nargs="+", default=["gpucb", "rahbo", "erahbo"])
     parser.add_argument("--alphas",      nargs="+", type=float, default=[0.5, 1.0, 1.5, 2.0])
     parser.add_argument("--n-targets",   type=int,   default=20)
+    parser.add_argument("--n-incumbents", type=int,   default=None,
+                        help="Max incumbents to use per (alpha, method). "
+                             "Defaults to all available runs.")
     parser.add_argument("--target-seed", type=int,   default=0,
                         help="RNG seed for target domain sampling (must match aggregate stage).")
     parser.add_argument("--output-dir",  required=True)
@@ -123,6 +126,12 @@ def main() -> None:
             except Exception as exc:
                 print(f"  [ERROR] {exc}")
                 continue
+
+            # Optionally limit the number of incumbents used
+            if args.n_incumbents is not None:
+                incumbents        = incumbents[:args.n_incumbents]
+                source_scores     = source_scores[:args.n_incumbents]
+                source_score_vars = source_score_vars[:args.n_incumbents]
 
             for run_idx, (hp, src, src_var) in enumerate(zip(incumbents, source_scores, source_score_vars)):
                 yaml_path = inc_dir / f"a{alpha:g}_{method}" / "incumbent_from_pkl" / f"run_{run_idx:02d}_incumbent.yaml"
