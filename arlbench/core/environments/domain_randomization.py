@@ -158,6 +158,8 @@ class DomainRandomizer:
 
         randomization_configs = []
         for param_name, param_config in config.items():
+            # Convert OmegaConf DictConfig to plain dict before mutating
+            param_config = dict(param_config)
             param_config["param_name"] = param_name
             randomization_configs.append(
                 DomainRandomizationConfig.from_dict(param_config)
