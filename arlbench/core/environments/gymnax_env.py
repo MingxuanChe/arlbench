@@ -61,6 +61,17 @@ class GymnaxEnv(Environment):
             self.env_params = jax.vmap(
                 lambda r: self.domain_randomizer.sample_env_params(base_env_params, r)
             )(param_rngs)
+            # Debug: print sampled values for each randomized parameter
+            dr_param_names = [c.param_name for c in self.domain_randomizer.randomization_configs]
+            print(f"[DR] Domain randomization ENABLED for {env_name} (seed={seed}, n_envs={n_envs})")
+            for pname in dr_param_names:
+                vals = getattr(self.env_params, pname, None)
+                if vals is not None:
+                    import numpy as np
+                    vals_np = np.array(vals)
+                    print(f"[DR]   {pname}: min={vals_np.min():.6g}  max={vals_np.max():.6g}  mean={vals_np.mean():.6g}  values={vals_np}")
+                else:
+                    print(f"[DR]   {pname}: <not found in env_params>")
         else:
             self.env_params = base_env_params
 
