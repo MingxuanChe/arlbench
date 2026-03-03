@@ -108,6 +108,12 @@ def main() -> None:
 
     for alpha in args.alphas:
         for method in args.methods:
+            # GPUCB is alpha-independent (its results path ignores alpha).
+            # Process it only once — at the first alpha — to avoid duplicate entries.
+            if method == "gpucb" and alpha != args.alphas[0]:
+                print(f"  [SKIP] gpucb is alpha-independent; already processed at α={args.alphas[0]:g}")
+                continue
+
             run_dir = _run_dir(root, alpha, method, args.algorithm, args.env_config)
             pkl_path = run_dir / "results.pkl"
 
