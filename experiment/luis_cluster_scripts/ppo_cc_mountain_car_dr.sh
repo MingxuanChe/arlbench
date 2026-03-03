@@ -28,7 +28,7 @@ echo "================================================="
 N_PARTITIONS=8
 TOTAL_TRIALS=512
 TRIALS_PER_PARTITION=$((TOTAL_TRIALS / N_PARTITIONS))
-CONFIG="part_sobol_ppo_cartpole"
+CONFIG="part_sobol_ppo_cartpole_dr"
 ALGO="ppo"
 SEARCH_SPACE="ppo_cc"
 ENV="cc_mountain_car_dr"

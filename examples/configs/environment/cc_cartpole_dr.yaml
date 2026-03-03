@@ -13,17 +13,16 @@ env_params: {}
 
 # Domain randomization configuration for CartPole-v1
 # Nominal values: masspole=0.1, length=0.5
+# Range: 50% – 150% of nominal (uniform)
 domain_randomization:
   masspole:
     distribution: "uniform"
     min_value: 0.05   # 50% of nominal (0.1)
     max_value: 0.15   # 150% of nominal
   length:
-    distribution: "normal"
-    mean: 0.5         # Nominal value
-    std: 0.1          # 20% std
-    clip_min: 0.3     # 60% of nominal
-    clip_max: 0.7     # 140% of nominal
+    distribution: "uniform"
+    min_value: 0.25   # 50% of nominal (0.5)
+    max_value: 0.75   # 150% of nominal
 
 # Evaluation domain randomization (same distribution as training)
 eval_domain_randomization:
@@ -32,8 +31,6 @@ eval_domain_randomization:
     min_value: 0.05
     max_value: 0.15
   length:
-    distribution: "normal"
-    mean: 0.5
-    std: 0.1
-    clip_min: 0.3
-    clip_max: 0.7
+    distribution: "uniform"
+    min_value: 0.25
+    max_value: 0.75
