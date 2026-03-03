@@ -221,6 +221,17 @@ class SAC(Algorithm):
             jnp.float32
         )
 
+        # Precompute action bounds outside of jit (action_space.low/high can be
+        # traced arrays inside scan when domain randomization is active)
+        _low = self.env.action_space.low
+        _high = self.env.action_space.high
+        if _low is None or np.isnan(_low).any() or np.isinf(_low).any():
+            _low = -np.ones(self.env.action_space.shape, dtype=np.float32)
+        if _high is None or np.isnan(_high).any() or np.isinf(_high).any():
+            _high = np.ones(self.env.action_space.shape, dtype=np.float32)
+        self._action_low = jnp.array(_low)
+        self._action_high = jnp.array(_high)
+
     @staticmethod
     def get_hpo_config_space(seed: int | None = None, use_constants: bool = True) -> ConfigurationSpace:
         """Returns the hyperparameter configuration space for SAC.
@@ -521,11 +532,7 @@ class SAC(Algorithm):
             sampled_action,
         )
 
-        low, high = self.env.action_space.low, self.env.action_space.high
-        if low is None or np.isnan(low).any() or np.isinf(low).any():
-            low = -jnp.ones_like(action)
-        if high is None or np.isnan(high).any() or np.isinf(high).any():
-            high = jnp.ones_like(action)
+        low, high = self._action_low, self._action_high
         return low + (action + 1.0) * 0.5 * (high - low)
 
     @functools.partial(jax.jit, static_argnums=(0, 3, 4, 5), donate_argnums=(2,))
@@ -1117,11 +1124,7 @@ class SAC(Algorithm):
             pi = self.actor_network.apply(actor_train_state.params, last_obs)
 
         buffer_action = pi.sample(seed=_rng)
-        low, high = self.env.action_space.low, self.env.action_space.high
-        if low is None or np.isnan(low).any() or np.isinf(low).any():
-            low = -jnp.ones_like(buffer_action)
-        if high is None or np.isnan(high).any() or np.isinf(high).any():
-            high = jnp.ones_like(buffer_action)
+        low, high = self._action_low, self._action_high
         action = low + (buffer_action + 1.0) * 0.5 * (high - low)
 
         # Perform environment step

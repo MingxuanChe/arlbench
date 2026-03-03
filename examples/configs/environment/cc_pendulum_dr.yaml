@@ -12,24 +12,24 @@ env_params: {}
 
 # Domain randomization configuration for Pendulum-v1
 # Nominal values: m=1.0, l=1.0
-# Range: 50% – 150% of nominal (uniform)
+# Range: 25% – 200% of nominal (uniform)
 domain_randomization:
   m:
     distribution: "uniform"
-    min_value: 0.5   # 50% of nominal (1.0)
-    max_value: 1.5   # 150% of nominal
+    min_value: 0.25   # 25% of nominal (1.0)
+    max_value: 2.0    # 200% of nominal
   l:
     distribution: "uniform"
-    min_value: 0.5   # 50% of nominal (1.0)
-    max_value: 1.5   # 150% of nominal
+    min_value: 0.25   # 25% of nominal (1.0)
+    max_value: 2.0    # 200% of nominal
 
 # Evaluation domain randomization (same distribution as training)
 eval_domain_randomization:
   m:
     distribution: "uniform"
-    min_value: 0.5
-    max_value: 1.5
+    min_value: 0.25
+    max_value: 2.0
   l:
     distribution: "uniform"
-    min_value: 0.5
-    max_value: 1.5
+    min_value: 0.25
+    max_value: 2.0

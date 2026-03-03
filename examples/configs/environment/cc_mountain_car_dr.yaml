@@ -12,24 +12,24 @@ env_params: {}
 
 # Domain randomization configuration for MountainCar-v0
 # Nominal values: force=0.001, gravity=0.0025
-# Range: 50% – 150% of nominal (uniform)
+# Range: 25% – 200% of nominal (uniform)
 domain_randomization:
   force:
     distribution: "uniform"
-    min_value: 0.0005    # 50% of nominal (0.001)
-    max_value: 0.0015    # 150% of nominal
+    min_value: 0.00025   # 25% of nominal (0.001)
+    max_value: 0.002     # 200% of nominal
   gravity:
     distribution: "uniform"
-    min_value: 0.00125   # 50% of nominal (0.0025)
-    max_value: 0.00375   # 150% of nominal
+    min_value: 0.000625  # 25% of nominal (0.0025)
+    max_value: 0.005     # 200% of nominal
 
 # Evaluation domain randomization (same distribution as training)
 eval_domain_randomization:
   force:
     distribution: "uniform"
-    min_value: 0.0005
-    max_value: 0.0015
+    min_value: 0.00025
+    max_value: 0.002
   gravity:
     distribution: "uniform"
-    min_value: 0.00125
-    max_value: 0.00375
+    min_value: 0.000625
+    max_value: 0.005
